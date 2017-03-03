@@ -19,6 +19,13 @@ namespace CopyDb.MetaData
 
         public override string ToString() => $"{Name} ({Column})";
 
+        public string Render()
+        {
+            return
+$@"ALTER TABLE ONLY ""{Table}""
+    ADD CONSTRAINT ""{Name}"" PRIMARY KEY (""{Column}"");";
+        }
+
         public static List<PrimaryKey> GetPrimaryKeys(string catalog, string schema, string conStr)
         {
             using (var con = new SqlConnection(conStr))

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 
@@ -25,6 +26,16 @@ namespace CopyDb.MetaData
             ReferencedColumn = (string)reader["referenced_column"];
             UpdateRule = (string)reader["on_update"];
             DeleteRule = (string)reader["on_delete"];
+        }
+
+        public string Render()
+        {
+            return
+$@"ALTER TABLE ONLY ""{Table}""
+    ADD CONSTRAINT ""{Name}""
+	FOREIGN KEY (""{Column}"") REFERENCES ""{ReferencedTable}""(""{ReferencedColumn}"")
+	ON UPDATE {UpdateRule}
+	ON DELETE {DeleteRule};";
         }
 
         public static List<ForeignKey> GetForeignKeys(string schema, string conStr)

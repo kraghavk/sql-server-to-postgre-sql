@@ -1,0 +1,40 @@
+﻿namespace CopyDb.MetaData
+{
+    public enum MsType
+    {
+        BIGINT,
+        BINARY,
+        BIT,
+        CHAR,
+        CHARACTER,
+        DATE,
+        DATETIME,
+        DATETIME2,
+        DATETIMEOFFSET,
+        DECIMAL,
+        DEC,
+        DOUBLE_PRECISION,
+        FLOAT,
+        IMAGE,
+        INT,
+        INTEGER,
+        MONEY,
+        NCHAR,
+        NTEXT,
+        NUMERIC,
+        NVARCHAR,
+        REAL,
+        ROWVERSION,
+        SMALLDATETIME,
+        SMALLINT,
+        SMALLMONEY,
+        TEXT,
+        TIME,
+        TIMESTAMP,
+        TINYINT,
+        UNIQUEIDENTIFIER,
+        VARBINARY,
+        VARCHAR,
+        XML
+    }
+}

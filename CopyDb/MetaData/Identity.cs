@@ -22,6 +22,22 @@ namespace CopyDb.MetaData
             LastValue = reader["last_value"] == DBNull.Value ? null : (long?)Int64.Parse(reader["last_value"].ToString());
         }
 
+        public string Render()
+        {
+            var name = $"{Table}_{Column}_seq";
+            return
+$@"CREATE SEQUENCE ""{name}""
+    START WITH {Seed}
+    INCREMENT BY {Increment}
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE ""{name}"" OWNED BY ""{Table}"".""{Column}"";
+
+ALTER TABLE ONLY ""{Table}"" ALTER COLUMN ""{Column}"" SET DEFAULT nextval('""{name}""'::regclass);";
+        }
+
         public override string ToString() => $"{Column} ({Seed??0},{Increment??1})";
 
         public static List<Identity> GetIds(string conStr)

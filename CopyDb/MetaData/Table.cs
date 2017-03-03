@@ -17,6 +17,12 @@ namespace CopyDb.MetaData
 
         public override string ToString() => Name;
 
+        public string Render()
+        {
+            var cols = String.Join(",\r\n", Columns.Select(c => c.Render()));
+            return $"CREATE TABLE \"{Name}\" (\r\n{cols}\r\n);";
+        }
+
         public static List<Table> GetTables(string catalog, string schema, string conStr)
         {
             var fks = ForeignKey.GetForeignKeys(schema, conStr);

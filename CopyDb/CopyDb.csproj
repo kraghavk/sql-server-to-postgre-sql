@@ -49,7 +49,10 @@
     <Compile Include="MetaData\Column.cs" />
     <Compile Include="MetaData\ForeignKey.cs" />
     <Compile Include="MetaData\Index.cs" />
+    <Compile Include="MetaData\MsType.cs" />
+    <Compile Include="MetaData\PgType.cs" />
     <Compile Include="MetaData\PrimaryKey.cs" />
+    <Compile Include="MetaData\TypeConverter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="MetaData\Identity.cs" />

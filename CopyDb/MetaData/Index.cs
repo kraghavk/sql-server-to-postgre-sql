@@ -30,6 +30,15 @@ namespace CopyDb.MetaData
             _columnName = (string) reader["ColumnName"];
         }
 
+        public string Render()
+        {
+            var columns = String.Join(",", Columns.Select(c => $"\"{c}\""));
+
+            return IsUnique 
+                ? $"CREATE UNIQUE INDEX \"{Name}\" ON \"{Table}\" USING btree ({columns});" 
+                : $"CREATE INDEX \"{Name}\" ON \"{Table}\" USING btree ({columns});";
+        }
+
         public static List<Index> GetIndeIndices(string conStr)
         {
             using (var con = new SqlConnection(conStr))

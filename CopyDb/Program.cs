@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Npgsql;
 using CopyDb.MetaData;
 
 namespace CopyDb
@@ -22,8 +16,17 @@ namespace CopyDb
         static void Main(string[] args)
         {            
             var tables = Table.GetTables("ISCommerce", "dbo", MsConStr);
-            var colTypes = tables.SelectMany(x => x.Columns).Select(x => x.DataType).Distinct().ToList();
-            
+
+            var text = String.Join("\r\n\r\n", tables.Select(s => s.Render()));
+
+            //TODO: here we will insert the data and then create keys, indices etc
+
+            text += "\r\n\r\n" + String.Join("\r\n\r\n", tables.SelectMany(x => x.Identities).Select(x => x.Render()));
+            text += "\r\n\r\n" + String.Join("\r\n\r\n", tables.Select(x => x.PrimaryKey.Render()));
+            text += "\r\n\r\n" + String.Join("\r\n\r\n", tables.SelectMany(x => x.Indices).Select(x => x.Render()));
+            text += "\r\n\r\n" + String.Join("\r\n\r\n", tables.SelectMany(x => x.ForeignKeys).Select(x => x.Render()));
+
+            File.WriteAllText("d:\\test.sql",text);
         }
     }
 }
