@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace CopyDb.MetaData
 {
@@ -8,22 +10,28 @@ namespace CopyDb.MetaData
     {
         public string Name { get; set; }
         public string Table { get; set; }
-        public string Column { get; set; }
+        public List<string> Columns { get; set; }
+
+        private readonly string _column;
 
         public PrimaryKey(IDataReader reader)
         {
             Name = (string)reader["CONSTRAINT_NAME"];
             Table = (string)reader["TABLE_NAME"];
-            Column = (string)reader["COLUMN_NAME"];
+            _column = (string)reader["COLUMN_NAME"];
         }
 
-        public override string ToString() => $"{Name} ({Column})";
+        private PrimaryKey() { }
+
+        public override string ToString() => $"{Name} ({_column})";
 
         public string Render()
         {
+            var columns = String.Join(",", Columns.Select(c => $"\"{c}\""));
+
             return
 $@"ALTER TABLE ONLY ""{Table}""
-    ADD CONSTRAINT ""{Name}"" PRIMARY KEY (""{Column}"");";
+    ADD CONSTRAINT ""{Name}"" PRIMARY KEY ({columns});";
         }
 
         public static List<PrimaryKey> GetPrimaryKeys(string catalog, string schema, string conStr)
@@ -41,7 +49,18 @@ $@"ALTER TABLE ONLY ""{Table}""
                 {
                     pks.Add(new PrimaryKey(reader));
                 }
-                return pks;
+
+                return pks
+                    .GroupBy(g => g.Name)
+                    .Select(x => new PrimaryKey
+                    {
+                        Name = x.FirstOrDefault()?.Name,
+                        Table = x.FirstOrDefault()?.Table,
+                        Columns = x
+                            .Select(c => c._column)
+                            .ToList()
+                    })
+                    .ToList();
             }
         }
 

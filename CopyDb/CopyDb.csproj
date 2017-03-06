@@ -46,6 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\DataCopier.cs" />
+    <Compile Include="Data\PgSerializer.cs" />
     <Compile Include="MetaData\Column.cs" />
     <Compile Include="MetaData\ForeignKey.cs" />
     <Compile Include="MetaData\Index.cs" />

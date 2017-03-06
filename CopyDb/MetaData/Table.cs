@@ -31,10 +31,10 @@ namespace CopyDb.MetaData
             var ixs = Index.GetIndeIndices(conStr);
 
             //don't include indices that equals to PK
-            ixs = ixs.Where(x => x.Columns.Count > 1 
-                              || !pks.Any(p => p.Table == x.Table 
-                                            && p.Column == x.Columns.First()))
-                     .ToList();
+            ixs = ixs
+                .Where(x => !pks.Any(p => p.Table == x.Table        //the same table
+                            && !x.Columns.Except(p.Columns).Any())) //IX contains only fields that already are in the PK
+                .ToList();
 
             using (var con = new SqlConnection(conStr))
             using (var cmd = new SqlCommand(ColumnsCmdText, con))

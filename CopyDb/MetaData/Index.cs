@@ -18,7 +18,7 @@ namespace CopyDb.MetaData
         private readonly string _columnName;
         private readonly int _columnId;
 
-        public Index() { }
+        private Index() { }
 
         public Index(IDataReader reader)
         {
