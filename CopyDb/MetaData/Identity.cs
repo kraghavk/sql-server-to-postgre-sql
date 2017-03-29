@@ -34,7 +34,7 @@ $@"CREATE SEQUENCE ""{name}""
     CACHE 1;
 
 ALTER SEQUENCE ""{name}"" OWNED BY ""{Table}"".""{Column}"";
-
+SELECT setval('""{name}""'::regclass, COALESCE((SELECT MAX(""{Column}"") + 1 FROM ""{Table}""), {Seed}), false);
 ALTER TABLE ONLY ""{Table}"" ALTER COLUMN ""{Column}"" SET DEFAULT nextval('""{name}""'::regclass);";
         }
 

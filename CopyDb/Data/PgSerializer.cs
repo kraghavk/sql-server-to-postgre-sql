@@ -1,63 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using CopyDb.MetaData;
 using Npgsql;
+using NpgsqlTypes;
 
 namespace CopyDb.Data
 {
     public class PgSerializer
     {
-        public static void SerializeColumn(Column c, object value, NpgsqlCopySerializer serializer)
+        public static void SerializeColumn(Column c, object value, NpgsqlBinaryImporter importer)
         {
             if (value == DBNull.Value)
             {
-                serializer.AddNull();
+                importer.WriteNull();
             }
             else
             {
-                Handlers[c.Type](serializer, value);
+                var type = GetPgType(c.Type, c.IsMax);
+                var s = value as string;
+                if (s == null)
+                {
+                    importer.Write(value, type);
+                }
+                else
+                {
+                    s = Regex.Replace(s, "\0", ""); //null characters are not allowed in Postgres
+                    importer.Write(s, type);
+                }
             }
         }
 
-        private static readonly IDictionary<MsType, Action<NpgsqlCopySerializer, object>> Handlers =
-            new Dictionary<MsType, Action<NpgsqlCopySerializer, object>>
+        private static NpgsqlDbType GetPgType(MsType src, bool isMax)
         {
-            { MsType.BIT,(s,o) => s.AddBool((bool)o) },  //bool
-            { MsType.BIGINT,(s,o) => s.AddInt64((long)o) }, //long
-            { MsType.CHAR,(s,o) => s.AddString((string)o) }, //string
-            { MsType.CHARACTER,(s,o) => s.AddString((string)o) }, //string
-            { MsType.DATE,(s,o) => s.AddDateTime((DateTime)o) }, //datetime
-            { MsType.DATETIME,(s,o) => s.AddDateTime((DateTime)o) },  //datetime
-            { MsType.DATETIME2,(s,o) => s.AddDateTime((DateTime)o) },  //datetime
-            { MsType.DECIMAL,(s,o) => s.AddNumber(Convert.ToDouble((decimal)o)) },  //decimal
-            { MsType.DEC,(s,o) => s.AddNumber(Convert.ToDouble((decimal)o)) },  //decimal
-            { MsType.DOUBLE_PRECISION,(s,o) => s.AddNumber((double)o) }, //double
-            { MsType.FLOAT,(s,o) => s.AddNumber((double)o) },  //double
-            { MsType.INT,(s,o) => s.AddInt32((int)o) },  //int
-            { MsType.INTEGER,(s,o) => s.AddInt32((int)o) },  //int
-            { MsType.MONEY,(s,o) => s.AddNumber(Convert.ToDouble((decimal)o)) },  //decimal
-            { MsType.NCHAR,(s,o) => s.AddString((string)o) },  //string
-            { MsType.NTEXT,(s,o) => s.AddString((string)o) },  //string
-            { MsType.NUMERIC,(s,o) => s.AddNumber(Convert.ToDouble((decimal)o)) }, //decimal
-            { MsType.NVARCHAR,(s,o) => s.AddString((string)o) }, //string
-            { MsType.REAL,(s,o) => s.AddNumber(Convert.ToDouble((float)o)) }, //float
-            { MsType.VARCHAR,(s,o) => s.AddString((string)o) }, //string
-            { MsType.TINYINT,(s,o) => s.AddInt32((byte)o) }, //byte
-            { MsType.SMALLDATETIME,(s,o) => s.AddDateTime((DateTime)o) }, //datetime
-            { MsType.SMALLINT,(s,o) => s.AddInt32((short)o) }, //short
-            { MsType.SMALLMONEY,(s,o) => s.AddNumber(Convert.ToDouble((decimal)o)) }, //decimal
-            { MsType.TEXT,(s,o) => s.AddString((string)o) }, //string
-
-            //TODO: [NOT IMPLEMENTED YET]
-            { MsType.TIME,(s,o) => s.AddNull() }, // timespan
-            { MsType.UNIQUEIDENTIFIER,(s,o) => s.AddNull() },  // guid
-            { MsType.DATETIMEOFFSET,(s,o) => s.AddNull() }, //DateTimeOffset
-            { MsType.VARBINARY,(s,o) => s.AddNull() }, // byte[]
-            { MsType.BINARY,(s,o) => s.AddNull() }, //byte[]
-            { MsType.TIMESTAMP,(s,o) => s.AddNull() }, // byte[]
-            { MsType.IMAGE,(s,o) => s.AddNull() }, //byte[]
-            { MsType.ROWVERSION,(s,o) => s.AddNull() }, //byte[]
-            { MsType.XML,(s,o) => s.AddNull() }, // Xml
-        };
+            switch (src)
+            {
+                case MsType.BIGINT: return NpgsqlDbType.Bigint;
+                case MsType.BINARY: return NpgsqlDbType.Bytea;
+                case MsType.BIT: return NpgsqlDbType.Boolean;
+                case MsType.CHAR: return NpgsqlDbType.Char;
+                case MsType.CHARACTER: return NpgsqlDbType.Char;
+                case MsType.DATE: return NpgsqlDbType.Date;
+                case MsType.DATETIME: return NpgsqlDbType.Timestamp;
+                case MsType.DATETIME2: return NpgsqlDbType.Timestamp;
+                case MsType.DATETIMEOFFSET: return NpgsqlDbType.TimestampTZ;
+                case MsType.DECIMAL: return NpgsqlDbType.Numeric;
+                case MsType.DEC: return NpgsqlDbType.Numeric;
+                case MsType.DOUBLE_PRECISION: return NpgsqlDbType.Double;
+                case MsType.FLOAT: return NpgsqlDbType.Double;
+                case MsType.IMAGE: return NpgsqlDbType.Bytea;
+                case MsType.INT: return NpgsqlDbType.Integer;
+                case MsType.INTEGER: return NpgsqlDbType.Integer;
+                case MsType.MONEY: return NpgsqlDbType.Numeric;
+                case MsType.NCHAR: return NpgsqlDbType.Char;
+                case MsType.NTEXT: return NpgsqlDbType.Text;
+                case MsType.NUMERIC: return NpgsqlDbType.Numeric;
+                case MsType.NVARCHAR: return isMax ? NpgsqlDbType.Text : NpgsqlDbType.Varchar;
+                case MsType.REAL: return NpgsqlDbType.Real;
+                case MsType.ROWVERSION: return NpgsqlDbType.Bytea;
+                case MsType.SMALLDATETIME: return NpgsqlDbType.Timestamp;
+                case MsType.SMALLINT: return NpgsqlDbType.Smallint;
+                case MsType.SMALLMONEY: return NpgsqlDbType.Money;
+                case MsType.TEXT: return NpgsqlDbType.Text;
+                case MsType.TIME: return NpgsqlDbType.Time;
+                case MsType.TIMESTAMP: return NpgsqlDbType.Bytea;
+                case MsType.TINYINT: return NpgsqlDbType.Smallint;
+                case MsType.UNIQUEIDENTIFIER: return NpgsqlDbType.Uuid;
+                case MsType.VARBINARY: return NpgsqlDbType.Bytea;
+                case MsType.VARCHAR: return isMax ? NpgsqlDbType.Text : NpgsqlDbType.Varchar;
+                case MsType.XML: return NpgsqlDbType.Xml;
+                default: throw new ArgumentOutOfRangeException(nameof(src), src, null);
+            }
+        }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -44,12 +43,12 @@ namespace CopyDb.Data
 
         private DataTable GetDataChunk(int page)
         {
-            var columns = String.Join(",", _table.Columns);
-            var pkColumns = String.Join(",", _table.PrimaryKey.Columns);
+            var columns = String.Join(",", _table.Columns.Select(x => $"[{x.Name}]"));
+            var pkColumns = String.Join(",", _table.PrimaryKey.Columns.Select(x => $"[{x}]"));
 
             var query = $@"
                 SELECT {columns}
-                FROM {_table.Name}
+                FROM [{_table.Name}]
                 ORDER BY {pkColumns}
                 OFFSET {page * _chunkSize} ROWS
                 FETCH NEXT {_chunkSize} ROWS ONLY";
@@ -70,31 +69,24 @@ namespace CopyDb.Data
 
         private void ExportData(DataTable data)
         {
+            var columns = String.Join(",", _table.Columns.Select(c => $"\"{c.Name}\""));
+            var cmdText = $"COPY \"{_table.Name}\"({columns}) FROM STDIN (FORMAT BINARY);";
             using (var con = new NpgsqlConnection(_pgConStr))
-            using (var cmd = con.CreateCommand())
             {
                 con.Open();
-                var columns = String.Join(",", _table.Columns.Select(c => $"\"{c.Name}\""));
-                cmd.CommandText = $"COPY \"{_table.Name}\"({columns}) FROM STDIN;";
-
-                var serializer = new NpgsqlCopySerializer(con);
-                var copyIn = new NpgsqlCopyIn(cmd, con, serializer.ToStream);
-
-                copyIn.Start();
-                foreach (DataRow row in data.Rows)
+                using (var writer = con.BeginBinaryImport(cmdText))
                 {
-                    foreach (var column in _table.Columns)
+                    foreach (DataRow row in data.Rows)
                     {
-                        PgSerializer.SerializeColumn(column, row[column.Name], serializer);
+                        writer.StartRow();
+                        foreach (var column in _table.Columns)
+                        {
+                            PgSerializer.SerializeColumn(column, row[column.Name], writer);
+                        }
                     }
-                    serializer.EndRow();
-                    serializer.Flush();
                 }
-
-                copyIn.End();
-                serializer.Close();
-                // copyIn.Cancel("Undo copy on exception."); //TODO: cancell the insertion on exception!
             }
         }
     }
 }
+

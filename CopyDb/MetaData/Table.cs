@@ -20,7 +20,7 @@ namespace CopyDb.MetaData
         public string Render()
         {
             var cols = String.Join(",\r\n", Columns.Select(c => c.Render()));
-            return $"CREATE TABLE \"{Name}\" (\r\n{cols}\r\n);";
+            return $"CREATE TABLE IF NOT EXISTS \"{Name}\" (\r\n{cols}\r\n);";
         }
 
         public static List<Table> GetTables(string catalog, string schema, string conStr)
