@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -12,51 +13,52 @@ namespace CopyDb
 {
     public class Program
     {
-        private const int Size = 100_000;
-
-        private const string MsConStr = "Server=.;Database=ISCommerce2;Trusted_Connection=True;MultipleActiveResultSets=True";
-        private const string PgConStr = "User ID=postgres;Password=1364791835Q!;Host=localhost;Port=5432;Database=test;Pooling=false;";
-
-        static void Main(string[] args)
+        private static readonly string MsConStr = ConfigurationManager.AppSettings["MsConStr"];
+        private static readonly string PgConStr = ConfigurationManager.AppSettings["PgConStr"];
+        private static readonly string MsDbName = ConfigurationManager.AppSettings["MsDbName"];
+        private static readonly string MsSchema = ConfigurationManager.AppSettings["MsSchema"];
+        private static readonly int ChunkSize = Int32.Parse(ConfigurationManager.AppSettings["ChunkSize"]);
+        private static readonly int Fps = Int32.Parse(ConfigurationManager.AppSettings["Fps"]);
+        
+        private static void Main()
         {
-            //todo: 1 create concurrent dictionary (table -> progress)
-            //todo: 2 update the dictionary during export
-            //todo: 3. show progress in parallel task during export
-
-            //>>>> emulation
-            var ttt = Table.GetTables("ISCommerce2", "dbo", MsConStr);
-            var data = Enumerable.Range(1, 10).Select(p => ttt.ToDictionary(k => k.Name, v => p/(double)10)).ToList();
-
-            Console.WriteLine("Press any key to start");
-            Console.ReadKey();
-            Console.Clear();
-
-            foreach (var step in data)
-            {
-                Print(step, ConsoleColor.DarkGreen);
-                Thread.Sleep(200);
-            }
-            return;
-            //<< emulation
-
             var sw = new Stopwatch();
             sw.Start();
 
-            //get the source schema
-            var tables = Table.GetTables("ISCommerce2", "dbo", MsConStr);
+            Console.WriteLine("Getting the source schema");
+            var tables = Table.GetTables(MsDbName, MsSchema, MsConStr);
 
-            //create tables
+            Console.WriteLine("Creating the tables");
             var text = String.Join("\r\n\r\n", tables.Select(s => s.Render()));
             ExecuteCommand(text);
 
+            //progress visualization
+            var progress = 0;
+            var max = GetMaxProgress();
+            var token = new CancellationTokenSource();
+            Task.Factory.StartNew(() =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    var percent = progress / (double)max;
+                    Write($"Copying the data, progress: {percent:P}", percent, ConsoleColor.DarkGreen);
+                    Task.Delay(1000 / Fps, token.Token).Wait(token.Token);
+                }
+            }, token.Token);
+
             //copy data
+            var empty = Console.BackgroundColor;
             Parallel.ForEach(tables, table =>
             {
-                var copier = new DataCopier(table, Size, MsConStr, PgConStr);
-                copier.CopyTable();
+                var copier = new DataCopier(table, ChunkSize, MsConStr, PgConStr);
+                copier.CopyTable(ref progress);
             });
+            token.Cancel();
+            Console.BackgroundColor = empty;
+            Console.Write("\n");
 
             //create: seq, pk, ix, fk
+            Console.WriteLine("Creating the Seq, PK, IX, FK");
             text = String.Join("\r\n\r\n", tables.SelectMany(x => x.Identities).Select(x => x.Render()));
             text += "\r\n\r\n" + String.Join("\r\n\r\n", tables.Select(x => x.PrimaryKey.Render()));
             text += "\r\n\r\n" + String.Join("\r\n\r\n", tables.SelectMany(x => x.Indices).Select(x => x.Render()));
@@ -64,7 +66,7 @@ namespace CopyDb
             ExecuteCommand(text);
 
             sw.Stop();
-            Console.WriteLine(sw.Elapsed);
+            Console.WriteLine("The conversion is complete. The total elapsed time is: {0:g}", sw.Elapsed);
         }
 
         private static void ExecuteCommand(string cmdText)
@@ -77,39 +79,38 @@ namespace CopyDb
                 con.Close();
             }
         }
-
-        private static void Print(Dictionary<string, double> progress, ConsoleColor color)
+        private static int GetMaxProgress()
         {
-            Console.SetCursorPosition(0,0);
-            int max = Console.WindowWidth;
-            int position = 0;
-            foreach (var table in progress)
+            const string query = @"
+                SELECT Sum(I.rows)
+                FROM   sys.tables t
+                INNER JOIN sys.sysindexes i
+                ON t.object_id = i.id AND I.indid < 2";
+            using (var con = new SqlConnection(MsConStr))
+            using (var cmd = new SqlCommand(query, con))
             {
-                if (position + table.Key.Length + 2 >= max)
-                {
-                    Console.WriteLine();
-                    Write(table.Key, table.Value, color);
-                    position = table.Key.Length + 2;
-                }
-                else
-                {
-                    Write(table.Key, table.Value, color);
-                    position += table.Key.Length + 2;
-                }
+                con.Open();
+                return (int)cmd.ExecuteScalar();
             }
         }
 
         private static void Write(string text, double progress, ConsoleColor color)
         {
-            text = $"[{text}]";
-            var cur = (int)Math.Round(progress * text.Length);
             var empty = Console.BackgroundColor;
-            for (int i = 0; i < text.Length; i++)
-            {
-                Console.BackgroundColor = cur > i ? color : empty;
-                Console.Write(text[i]);
-            }
+            Console.SetCursorPosition(0, 2);
+            var max = Console.WindowWidth;
+            var textPosition = (int)Math.Round((max - text.Length) / (double)2);
+            var fill = (int)Math.Round(progress * max);
+
+            var margin = String.Join("",Enumerable.Range(0, textPosition).Select(_ => " "));
+            var buffer = margin + text + margin;
+
+            var filled = buffer.Substring(0, fill);
+            Console.BackgroundColor = color;
+            Console.Write(filled);
+            var unfilled = buffer.Substring(fill + 1);
             Console.BackgroundColor = empty;
+            Console.Write(unfilled);
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Threading;
 using CopyDb.MetaData;
 using Npgsql;
 
@@ -13,7 +14,7 @@ namespace CopyDb.Data
         private readonly string _msConStr;
         private readonly string _pgConStr;
         private readonly int _chunkSize;
-
+        
 
         public DataCopier(Table table, int chunkSize, string msConStr, string pgConStr)
         {
@@ -23,7 +24,7 @@ namespace CopyDb.Data
             _chunkSize = chunkSize;
         }
 
-        public void CopyTable()
+        public void CopyTable(ref int progress)
         {
             var i = 0;
             while (true)
@@ -31,7 +32,7 @@ namespace CopyDb.Data
                 var data = GetDataChunk(i);
                 if (data.Rows.Count > 0)
                 {
-                    ExportData(data);
+                    ExportData(data, ref progress);
                     i++;
                 }
                 else
@@ -67,7 +68,7 @@ namespace CopyDb.Data
             }
         }
 
-        private void ExportData(DataTable data)
+        private void ExportData(DataTable data, ref int progress)
         {
             var columns = String.Join(",", _table.Columns.Select(c => $"\"{c.Name}\""));
             var cmdText = $"COPY \"{_table.Name}\"({columns}) FROM STDIN (FORMAT BINARY);";
@@ -83,6 +84,7 @@ namespace CopyDb.Data
                         {
                             PgSerializer.SerializeColumn(column, row[column.Name], writer);
                         }
+                        Interlocked.Increment(ref progress);
                     }
                 }
             }
