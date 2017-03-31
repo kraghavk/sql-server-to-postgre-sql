@@ -75,6 +75,7 @@ namespace CopyDb
             using (var cmd = new NpgsqlCommand(cmdText, con))
             {
                 con.Open();
+                cmd.CommandTimeout = 0; //PK, FK, IX creation might take a while
                 cmd.ExecuteNonQuery();
                 con.Close();
             }
