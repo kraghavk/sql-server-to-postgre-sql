@@ -43,11 +43,12 @@ namespace CopyDb.Data
                 case MsType.DATE: return NpgsqlDbType.Date;
                 case MsType.DATETIME: return NpgsqlDbType.Timestamp;
                 case MsType.DATETIME2: return NpgsqlDbType.Timestamp;
-                case MsType.DATETIMEOFFSET: return NpgsqlDbType.TimestampTZ;
+                case MsType.DATETIMEOFFSET: return NpgsqlDbType.TimestampTz;
                 case MsType.DECIMAL: return NpgsqlDbType.Numeric;
                 case MsType.DEC: return NpgsqlDbType.Numeric;
                 case MsType.DOUBLE_PRECISION: return NpgsqlDbType.Double;
                 case MsType.FLOAT: return NpgsqlDbType.Double;
+                case MsType.GEOMETRY: return NpgsqlDbType.Geometry;
                 case MsType.IMAGE: return NpgsqlDbType.Bytea;
                 case MsType.INT: return NpgsqlDbType.Integer;
                 case MsType.INTEGER: return NpgsqlDbType.Integer;

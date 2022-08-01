@@ -47,6 +47,9 @@ namespace CopyDb.MetaData
                 case MsType.FLOAT:
                     return "DOUBLE PRECISION";
 
+                case MsType.GEOMETRY:
+                    return "geometry(geometry,4326)";
+
                 case MsType.IMAGE:
                     return PgType.BYTEA.ToString();
 

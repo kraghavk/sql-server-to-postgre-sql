@@ -15,6 +15,7 @@
         DEC,
         DOUBLE_PRECISION,
         FLOAT,
+        GEOMETRY,
         IMAGE,
         INT,
         INTEGER,

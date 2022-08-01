@@ -38,7 +38,7 @@ namespace CopyDb
         {
             WrapMethod("Creating the tables", () =>
             {
-                var text = String.Join("\r\n\r\n", _tables.Select(s => s.Render()));
+                var text = String.Join("create extension if not exists postgis;\r\n\r\n", _tables.Select(s => s.Render()));
                 ExecuteCommand(text);
             });
         }

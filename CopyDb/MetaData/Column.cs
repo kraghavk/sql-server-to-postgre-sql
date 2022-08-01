@@ -17,7 +17,7 @@ namespace CopyDb.MetaData
         public int? NumericPrecision { get; set; }
         public int? NumericScale { get; set; }
         public int? DateTymePrecision { get; set; }
-        public MsType Type => (MsType) Enum.Parse(typeof(MsType), DataType.Replace(" ", "_"));
+        public MsType Type => (MsType)Enum.Parse(typeof(MsType), DataType.Replace(" ", "_"));
         public bool IsMax => MaxLenth.HasValue && MaxLenth.Value == -1;
 
         public override string ToString() => $"{Name} {DataType}";
@@ -49,21 +49,47 @@ namespace CopyDb.MetaData
             var parts = new List<string>();
             parts.Add($"\"{Name}\"");
             parts.Add(TypeConverter.GetPostgresType(this));
-            if(!String.IsNullOrEmpty(DefaultValue))
-                parts.Add($"DEFAULT {GetDefaultValue()}");
-            
-            if(!IsNullable)
+
+
+            if (!String.IsNullOrEmpty(DefaultValue))
+            {
+                var defaultValueExpr = GetDefaultValue();
+
+                if (!string.IsNullOrWhiteSpace(defaultValueExpr))
+                    parts.Add($"DEFAULT {defaultValueExpr}");
+            }
+
+            if (!IsNullable)
                 parts.Add("NOT NULL");
-            
+
             return "\t" + String.Join(" ", parts);
         }
 
         private string GetDefaultValue()
         {
-            var value = DefaultValue
-                .Replace("(", "")
-                .Replace(")", "")
-                .Replace("N'", "'");
+            var value = DefaultValue.Replace("N'", "'").Trim();
+
+            while (value.StartsWith("(") && value.EndsWith(")"))
+                value = value.Substring(1, value.Length - 2);
+
+            if (value.ToLowerInvariant().StartsWith("convert"))
+            {
+                var origColor = Console.ForegroundColor;
+
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine();
+                Console.WriteLine($"Warning! Unable to set default value for '{TableName}.{Name}'. The expression '{DefaultValue}' cannot be converted by this tool.");
+                Console.ForegroundColor = origColor;
+
+                return string.Empty;
+            }
+
+            if (value.ToLowerInvariant().Contains("datepart"))
+            {
+                value = value.Replace("datepart", "date_part");
+
+                value = value.Replace("day", "'day'").Replace("month", "'month'").Replace("year", "'year'");
+            }
 
             value = Regex.Replace(value, "getdate\\(?\\)?", "now()", RegexOptions.IgnoreCase);
 
