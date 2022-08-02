@@ -27,8 +27,24 @@ namespace CopyDb.Data
                 }
                 else
                 {
-                    s = Regex.Replace(s, "\0", ""); //null characters are not allowed in Postgres
-                    importer.Write(s, type);
+                    if (type != NpgsqlDbType.Geometry)
+                    {
+                        s = Regex.Replace(s, "\0", ""); //null characters are not allowed in Postgres
+                        importer.Write(s, type);
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrWhiteSpace(s))
+                        {
+                            var geomEWKT = $"SRID=4326;{s.Replace(" (", "(")}";
+
+                            importer.Write(geomEWKT);
+                        }
+                        else
+                        {
+                            importer.WriteNull();
+                        }
+                    }
                 }
             }
         }

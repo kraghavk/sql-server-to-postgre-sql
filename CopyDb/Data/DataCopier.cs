@@ -47,7 +47,11 @@ namespace CopyDb.Data
 
         private DataTable GetDataChunk(int page)
         {
-            var columns = String.Join(",", _table.Columns.Select(x => $"[{x.Name}]"));
+            var columns = String.Join(",", _table.Columns.Select(x =>
+            {
+                return x.Type != MsType.GEOMETRY ? $"[{x.Name}]" : $"[{x.Name}].STAsText() AS [{x.Name}]";
+            }));
+
             var pkColumns = _table.PrimaryKey?.Columns != null ? String.Join(",", _table.PrimaryKey?.Columns?.Select(x => $"[{x}]")) : columns;
 
             var query = $@"
