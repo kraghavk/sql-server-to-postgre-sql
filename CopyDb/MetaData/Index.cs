@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Microsoft.Data.SqlClient;
 
 namespace CopyDb.MetaData
 {
@@ -22,20 +21,20 @@ namespace CopyDb.MetaData
 
         public Index(IDataReader reader)
         {
-            Name = (string) reader["IndexName"];
-            Table = (string) reader["TableName"];
-            IsUnique = (bool) reader["IsUnique"];
+            Name = (string)reader["IndexName"];
+            Table = (string)reader["TableName"];
+            IsUnique = (bool)reader["IsUnique"];
 
             _columnId = (int)reader["ColumnId"];
-            _columnName = (string) reader["ColumnName"];
+            _columnName = (string)reader["ColumnName"];
         }
 
         public string Render()
         {
             var columns = String.Join(",", Columns.Select(c => $"\"{c}\""));
 
-            return IsUnique 
-                ? $"CREATE UNIQUE INDEX \"{Name}\" ON \"{Table}\" USING btree ({columns});" 
+            return IsUnique
+                ? $"CREATE UNIQUE INDEX \"{Name}\" ON \"{Table}\" USING btree ({columns});"
                 : $"CREATE INDEX \"{Name}\" ON \"{Table}\" USING btree ({columns});";
         }
 
@@ -68,8 +67,8 @@ namespace CopyDb.MetaData
             }
         }
 
-        public override string ToString() => $"{Name} ({String.Join(",",Columns)})";
-        
+        public override string ToString() => $"{Name} ({String.Join(",", Columns)})";
+
 
 
         private const string QueryText = @"

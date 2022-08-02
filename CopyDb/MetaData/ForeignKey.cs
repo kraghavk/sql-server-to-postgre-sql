@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+
+using Microsoft.Data.SqlClient;
 
 namespace CopyDb.MetaData
 {
@@ -19,8 +19,8 @@ namespace CopyDb.MetaData
 
         public ForeignKey(IDataReader reader)
         {
-            Name = (string) reader["FK_NAME"];
-            Table = (string) reader["table"];
+            Name = (string)reader["FK_NAME"];
+            Table = (string)reader["table"];
             Column = (string)reader["column"];
             ReferencedTable = (string)reader["referenced_table"];
             ReferencedColumn = (string)reader["referenced_column"];

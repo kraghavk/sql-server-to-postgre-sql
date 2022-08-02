@@ -1,26 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.SqlClient;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using CopyDb.Data;
 using CopyDb.MetaData;
+
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+
 using Npgsql;
 
 namespace CopyDb
 {
     public class Worker
     {
-        private  readonly string _msConStr = ConfigurationManager.AppSettings["MsConStr"];
-        private  readonly string _pgConStr = ConfigurationManager.AppSettings["PgConStr"];
-        private  readonly string _msDbName = ConfigurationManager.AppSettings["MsDbName"];
-        private  readonly string _msSchema = ConfigurationManager.AppSettings["MsSchema"];
-        private  readonly int _chunkSize = Int32.Parse(ConfigurationManager.AppSettings["ChunkSize"]);
-        private  readonly int _fps = Int32.Parse(ConfigurationManager.AppSettings["Fps"]);
+        private static readonly IConfiguration config;
+
+        static Worker()
+        {
+            var configuration = new ConfigurationBuilder()
+                         .SetBasePath(Directory.GetCurrentDirectory())
+                         .AddJsonFile($"appsettings.json");
+
+            config = configuration.Build();
+        }
+
+        private readonly string _msConStr = config["MsConStr"];
+        private readonly string _pgConStr = config["PgConStr"];
+        private readonly string _msDbName = config["MsDbName"];
+        private readonly string _msSchema = config["MsSchema"];
+        private readonly int _chunkSize = Int32.Parse(config["ChunkSize"]);
+        private readonly int _fps = Int32.Parse(config["Fps"]);
 
         private List<Table> _tables;
         private long _max;
@@ -87,7 +102,7 @@ namespace CopyDb
             sw.Start();
             var token = new CancellationTokenSource();
             RenderProgressBar(token.Token, "Verifying the data", 5);
-            
+
             Exception ex = null;
             var empty = Console.BackgroundColor;
             Parallel.ForEach(_tables, (table, state) =>

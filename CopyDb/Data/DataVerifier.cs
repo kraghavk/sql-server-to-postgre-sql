@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+
 using CopyDb.MetaData;
+
+using Microsoft.Data.SqlClient;
+
 using Npgsql;
 
 namespace CopyDb.Data
@@ -99,14 +101,14 @@ namespace CopyDb.Data
                         if (byteArray != null)
                         {
                             var byteArrayPg = pg[column.Name] as byte[];
-                            if(byteArrayPg == null)
+                            if (byteArrayPg == null)
                                 Throw(column, ms, pg);
 
                             using (var md5 = MD5.Create())
                             {
                                 var msHash = new Guid(md5.ComputeHash(byteArray));
                                 var pgHash = new Guid(md5.ComputeHash(byteArrayPg));
-                                if(!msHash.Equals(pgHash))
+                                if (!msHash.Equals(pgHash))
                                     Throw(column, ms, pg);
                             }
                         }

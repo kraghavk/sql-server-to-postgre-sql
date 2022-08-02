@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+
+using Microsoft.Data.SqlClient;
 
 namespace CopyDb.MetaData
 {
@@ -15,10 +16,10 @@ namespace CopyDb.MetaData
 
         public Identity(IDataReader reader)
         {
-            Table = (string) reader["table"];
-            Column = (string) reader["column"];
-            Seed = reader["seed_value"] == DBNull.Value ? null : (long?)Int64.Parse( reader["seed_value"].ToString()); //the data type is variant
-            Increment = reader["increment_value"] == DBNull.Value ? null : (long?)Int64.Parse( reader["increment_value"].ToString());
+            Table = (string)reader["table"];
+            Column = (string)reader["column"];
+            Seed = reader["seed_value"] == DBNull.Value ? null : (long?)Int64.Parse(reader["seed_value"].ToString()); //the data type is variant
+            Increment = reader["increment_value"] == DBNull.Value ? null : (long?)Int64.Parse(reader["increment_value"].ToString());
             LastValue = reader["last_value"] == DBNull.Value ? null : (long?)Int64.Parse(reader["last_value"].ToString());
         }
 
@@ -38,7 +39,7 @@ SELECT setval('""{name}""'::regclass, COALESCE((SELECT MAX(""{Column}"") + 1 FRO
 ALTER TABLE ONLY ""{Table}"" ALTER COLUMN ""{Column}"" SET DEFAULT nextval('""{name}""'::regclass);";
         }
 
-        public override string ToString() => $"{Column} ({Seed??0},{Increment??1})";
+        public override string ToString() => $"{Column} ({Seed ?? 0},{Increment ?? 1})";
 
         public static List<Identity> GetIds(string conStr)
         {

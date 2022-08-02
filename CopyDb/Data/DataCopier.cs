@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading;
+
 using CopyDb.MetaData;
+
+using Microsoft.Data.SqlClient;
+
 using Npgsql;
 
 namespace CopyDb.Data
@@ -14,7 +17,7 @@ namespace CopyDb.Data
         private readonly string _msConStr;
         private readonly string _pgConStr;
         private readonly int _chunkSize;
-        
+
 
         public DataCopier(Table table, int chunkSize, string msConStr, string pgConStr)
         {

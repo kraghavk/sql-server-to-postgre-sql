@@ -27,7 +27,7 @@ namespace CopyDb.MetaData
                     return PgType.DATE.ToString();
 
                 case MsType.DATETIME:
-                    return  PgType.TIMESTAMP.ToString();
+                    return PgType.TIMESTAMP.ToString();
 
                 case MsType.DATETIME2:
                     return PgType.TIMESTAMP.ToString();
@@ -43,7 +43,7 @@ namespace CopyDb.MetaData
 
                 case MsType.DOUBLE_PRECISION:
                     return "DOUBLE PRECISION";
-                    
+
                 case MsType.FLOAT:
                     return "DOUBLE PRECISION";
 
@@ -58,13 +58,13 @@ namespace CopyDb.MetaData
 
                 case MsType.INTEGER:
                     return PgType.INTEGER.ToString();
-                    
+
                 case MsType.MONEY:
                     return $"{PgType.NUMERIC}(19,4)"; //return PgType.MONEY.ToString();
 
                 case MsType.NCHAR:
                     return $"{PgType.CHAR}({c.MaxLenth})";
-                    
+
                 case MsType.NTEXT:
                     return PgType.TEXT.ToString();
 
@@ -72,8 +72,8 @@ namespace CopyDb.MetaData
                     return $"{PgType.NUMERIC}({c.NumericPrecision},{c.NumericScale})";
 
                 case MsType.NVARCHAR:
-                    return c.IsMax 
-                        ? PgType.TEXT.ToString() 
+                    return c.IsMax
+                        ? PgType.TEXT.ToString()
                         : $"{PgType.VARCHAR} ({c.MaxLenth})";
 
                 case MsType.REAL:
@@ -90,19 +90,19 @@ namespace CopyDb.MetaData
 
                 case MsType.SMALLMONEY:
                     return PgType.MONEY.ToString();
-                    
+
                 case MsType.TEXT:
                     return PgType.TEXT.ToString();
-                    
+
                 case MsType.TIME:
                     return $"{PgType.TIME}({c.DateTymePrecision})";
 
                 case MsType.TIMESTAMP:
                     return PgType.BYTEA.ToString();
-                    
+
                 case MsType.TINYINT:
                     return PgType.SMALLINT.ToString();
-                    
+
                 case MsType.UNIQUEIDENTIFIER:
                     return PgType.UUID.ToString();
 
@@ -110,14 +110,14 @@ namespace CopyDb.MetaData
                     return PgType.BYTEA.ToString();
 
                 case MsType.VARCHAR:
-                    return c.IsMax 
-                        ? PgType.TEXT.ToString() 
+                    return c.IsMax
+                        ? PgType.TEXT.ToString()
                         : $"{PgType.VARCHAR} ({c.MaxLenth})";
 
                 case MsType.XML:
                     return PgType.XML.ToString();
 
-                   default:
+                default:
                     throw new ArgumentOutOfRangeException();
             }
         }

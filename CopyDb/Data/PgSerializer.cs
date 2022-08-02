@@ -1,8 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
+
 using CopyDb.MetaData;
+
 using Npgsql;
+
 using NpgsqlTypes;
 
 namespace CopyDb.Data

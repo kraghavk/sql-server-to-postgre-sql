@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Microsoft.Extensions.Configuration;
 
 namespace CopyDb
 {
@@ -14,7 +17,7 @@ namespace CopyDb
             Sw.Start();
             var token = new CancellationTokenSource();
             UpdateTitle(token.Token);
-            
+
             var worker = new Worker();
             worker.GetSourceMetaData();
             worker.CreateTables();
@@ -22,7 +25,7 @@ namespace CopyDb
             worker.CopyData();
             worker.CreateSeqPkIxFk();
             worker.VerifyData();
-            
+
             Sw.Stop();
             token.Cancel();
             Console.WriteLine("\nThe conversion is complete. The total elapsed time is: {0:g}", Sw.Elapsed);
